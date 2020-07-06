@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="10dp"
+    android:background="@color/backgroundcolour"
+
+    tools:context=".Settings_activity">
+
+    <LinearLayout
+        android:clipToPadding="false"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:background="@android:color/transparent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:clipToPadding="false"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:background="@android:color/transparent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/ic_settings_black_24dp">
+
+            </ImageView>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:layout_marginLeft="20dp"
+                android:textSize="18sp"
+                android:text="Advanced mode"/>
+            <Switch
+                android:id="@+id/switch_advanced_mode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout><!--Advanced mode-->
+        <LinearLayout
+            android:clipToPadding="false"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:background="@android:color/transparent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/ic_ac_unit_black_24dp">
+
+            </ImageView>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:layout_marginLeft="20dp"
+                android:textSize="18sp"
+                android:text="Degrees Unit"/>
+            <Button
+                android:id="@+id/btn_degrees_c"
+                android:layout_marginLeft="40dp"
+                android:background="@drawable/green_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="°c"/>
+            <Button
+                android:id="@+id/btn_degrees_f"
+                android:background="@drawable/red_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="°F"/>
+        </LinearLayout><!--Temperature-->
+        <LinearLayout
+            android:clipToPadding="false"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:background="@android:color/transparent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/ic_delete_black_24dp">
+
+            </ImageView>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:layout_marginLeft="20dp"
+                android:textSize="18sp"
+                android:text="Delete local data"/>
+            <Button
+                android:id="@+id/btn_delete_local_data"
+                android:layout_marginLeft="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete local data"/>
+
+        </LinearLayout><!--Delete local data-->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/btn_bind_device"
+            android:foreground="?android:attr/selectableItemBackground"
+            android:clickable="true"
+
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            card_view:cardBackgroundColor="@android:color/transparent"
+            card_view:cardElevation="0dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:background="@drawable/circledbackgroundyellow"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_devices_black_24dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="20dp"
+                    android:gravity="center"
+                    android:text="Bind_device"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView><!--Home-->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/btn_settings_home"
+            android:foreground="?android:attr/selectableItemBackground"
+            android:clickable="true"
+
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            card_view:cardBackgroundColor="@android:color/transparent"
+            card_view:cardElevation="0dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:background="@drawable/circledbackgroundyellow"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_exit_to_app_black_24dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="20dp"
+                    android:gravity="center"
+                    android:text="Home"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView><!--Home-->
+
+    </LinearLayout>
+
+
+
+</LinearLayout>
+

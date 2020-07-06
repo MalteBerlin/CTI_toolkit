@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--Commands inside of the nordic board lookup table-->
+
+    <integer name="CMD_BLE_START">10</integer><!--Start command-->
+    <integer name="CMD_BLE_STOP">20</integer><!--Stop command-->
+    <integer name="CMD_BLE_HELP">30</integer><!--Help command-->
+    <!--40 is spare-->
+    <integer name="CMD_BLE_UART_LOG">50</integer><!--Toggle uart logging-->
+    <integer name="CMD_BLE_READ_CSV">60</integer><!--Get data log-->
+    <integer name="CMD_BLE_START_LOGGING">70</integer><!--Start logging-->
+    <integer name="CMD_BLE_DELETE_LOG_DATA_CSV">80</integer><!--Delete event log-->
+    <integer name="CMD_BLE_DELETE_LOG_EVENT_CSV">90</integer><!--Delete data log-->
+    <integer name="CMD_BLE_GATT_LOG">100</integer><!--Delete data log-->
+
+</resources>
