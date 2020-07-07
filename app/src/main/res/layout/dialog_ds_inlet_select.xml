@@ -17,38 +17,48 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Select data science process"
+            android:text="Select inlet sensor:"
             android:textSize="20sp"
             android:textStyle="bold"
             android:layout_marginTop="10dp"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="In let and outlet test"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginTop="10dp"/>
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:gravity="center"
             android:padding="25dp"
             android:background="@drawable/bg_round">
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/btn_bind_device_yes"
-                android:background="@drawable/green_button"
-                android:text="Yes"
+                android:id="@+id/btn_inlet_t1"
+                android:background="@drawable/red_button"
+                android:text="T1"
                 android:textStyle="bold"
                 android:textSize="16sp"/>
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/btn_bind_device_no"
+                android:id="@+id/btn_inlet_t2"
                 android:background="@drawable/red_button"
-                android:text="No"
+                android:text="T2"
+                android:textStyle="bold"
+                android:textSize="16sp"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_inlet_t3"
+                android:background="@drawable/red_button"
+                android:text="T3"
+                android:textStyle="bold"
+                android:textSize="16sp"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_inlet_t4"
+                android:background="@drawable/red_button"
+                android:text="T4"
                 android:textStyle="bold"
                 android:textSize="16sp"/>
         </LinearLayout>

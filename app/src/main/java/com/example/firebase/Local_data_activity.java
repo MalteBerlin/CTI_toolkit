@@ -10,8 +10,10 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.AbstractWindowedCursor;
 import android.database.Cursor;
 import android.database.CursorWindow;
@@ -57,6 +59,8 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.StringTokenizer;
 
+import static com.example.firebase.Home_activity.SHARDED_PREFS;
+import static com.example.firebase.Home_activity.Stored_bounded_device;
 import static com.example.firebase.Loginactivity.BLE_DB;
 
 import static com.example.firebase.Loginactivity.mDatareff_User;
@@ -97,6 +101,16 @@ public class Local_data_activity extends AppCompatActivity {
     private boolean D3_visible = false;
 
     private boolean Filter_ran = false;
+    private boolean Graph_process = false;// filter
+    //Data science tests
+    private Dialog dialog_ds_select_test;
+    private Dialog dialog_ds_inlet_select;
+    private Dialog dialog_ds_outlet_select;
+
+    private String ds_selected_inlet = "";//The selected inlet
+    private String ds_selected_outlet ="";//The selected outlet
+
+    private boolean inlet_outlet_test_selected = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -335,306 +349,7 @@ public class Local_data_activity extends AppCompatActivity {
         }
     }
 
-    private void Process_data_science() {
-        int temp_diff = 1000;//10°C
-        D1_visible = false;
-        D2_visible = false;
-        D3_visible = false;
-        //Use data science database
-        BLE_DB.deleteAll_Data_Science();
 
-        btn_day_one.setVisibility(View.INVISIBLE);
-        btn_day_two.setVisibility(View.INVISIBLE);
-        btn_day_three.setVisibility(View.INVISIBLE);
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-        Cursor data;
-        boolean Start_time_acquired = false;
-        boolean Date_set = false;
-        String T1_Data_string = "";
-        String T2_Data_string = "";
-        String T3_Data_string = "";
-        String T4_Data_string = "";
-        String Pdiff_Data_string = "";
-        String time = "";
-        String Second_part = "";
-        String Third_part = "";
-        String iDay = "";
-        data = BLE_DB.showData_Sensor_Board();//Sensor board filter
-        if (Data_type_string.equals("Live")) {
-            data = BLE_DB.showData_Sensor_Board();
-        } else if (Data_type_string.equals("Log")) {
-            data = BLE_DB.showData_Log();
-        } else if (Data_type_string.equals("Downloaded")) {
-            data = BLE_DB.showData_Downloaded();
-        }
-
-        if (data.getCount() != 0) {
-            //Cursor window fix and get data
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                CursorWindow cw = new CursorWindow("test", 536870912);//16777216 broke
-                AbstractWindowedCursor ac = (AbstractWindowedCursor) data;
-                ac.setWindow(cw);
-                ac.moveToFirst();//0
-
-                if (ac.getCount() == 0)//No data selected
-                {
-                    Utils.toast(getApplicationContext(), "No data selected");
-                }
-                for (int i = 0; i < ac.getCount(); i++) {
-
-                    if (Data_type_string.equals("Live")) {//Live data
-                        T1_Data_string = ac.getString(1);
-                        T2_Data_string = ac.getString(2);
-                        T3_Data_string = ac.getString(4);
-                        T4_Data_string = ac.getString(5);
-                        Pdiff_Data_string = ac.getString(6);
-                        time = ac.getString(7);
-                        if (Start_time_acquired == false) {
-                            Start_date = time;
-                            Start_time_acquired = true;
-                            StringTokenizer tokens = new StringTokenizer(Start_date, " ");
-                            sDay_of_week = tokens.nextToken();//Day of week
-                            sMonth = tokens.nextToken();//Month
-                            sDay = tokens.nextToken();//Day
-                            sTime_of_day = tokens.nextToken();//Time of day
-                            sGMT = tokens.nextToken();//GMT
-                            sYear = tokens.nextToken();//Year
-                            StringTokenizer timetokens = new StringTokenizer(sTime_of_day, ":");//This substring is split with a :
-                            sHour = timetokens.nextToken();//Hour
-                            sMinute = timetokens.nextToken();//Minute
-                            sSecond = timetokens.nextToken();//Second
-                            starting_seconds = (Integer.parseInt(sHour) * 3600) + (Integer.parseInt(sMinute) * 60) + (Integer.parseInt(sSecond));
-
-                            if (Date_set == false) {
-                                Day_1 = Integer.parseInt(sDay);
-                                if (Day_1 == 28 && Integer.parseInt(sMonth) == 2)//28 check Feb check
-                                {
-                                    if (Integer.parseInt(sYear) % 100 == 0 && (Integer.parseInt(sYear) % 400 == 0))//Leap year
-                                    {
-                                        Day_2 = Day_1 + 1;
-                                        Day_3 = Day_2 + 1;
-                                        Date_set = true;
-                                    }
-                                    //Not a leap year
-                                    Day_2 = 1;
-                                    Day_3 = Day_2 + 1;
-                                    Date_set = true;
-                                } else if (Day_1 == 29) {
-                                    Day_2 = Day_1 + 1;
-                                    Day_3 = Day_2 + 1;
-                                    Date_set = true;
-                                } else if (Day_1 == 30)//Check 31 days
-                                {
-                                    if ((Integer.parseInt(sMonth) == 1) || (Integer.parseInt(sMonth) == 3) || (Integer.parseInt(sMonth) == 5)
-                                            || (Integer.parseInt(sMonth) == 7) || (Integer.parseInt(sMonth) == 8) || (Integer.parseInt(sMonth) == 10)
-                                            || (Integer.parseInt(sMonth) == 12)) {
-                                        Day_2 = 1;
-                                        Day_3 = Day_2 + 1;
-                                        Date_set = true;
-                                    } else//No a 31 month
-                                    {
-                                        Day_2 = Day_1 + 1;
-                                        Day_3 = Day_2 + 1;
-                                        Date_set = true;
-                                    }
-                                } else {
-                                    Day_2 = Day_1 + 1;
-                                    Day_3 = Day_2 + 1;
-                                }
-                            }//Set date 1 ,2 and 3]
-
-                            StringTokenizer sting_token = new StringTokenizer(time, " ");
-                            String lDay_of_week = sting_token.nextToken();//Day of week
-                            String lMonth = sting_token.nextToken();//Month
-                            String lDay = sting_token.nextToken();//Day
-                            String lTime_of_day = sting_token.nextToken();//Time of day
-                            String lGMT = sting_token.nextToken();//GMT
-                            String lYear = sting_token.nextToken();//Year
-                            StringTokenizer string_time_token = new StringTokenizer(lTime_of_day, ":");//This substring is split with a :
-                            String lHour = string_time_token.nextToken();//Hour
-                            String lMinute = string_time_token.nextToken();//Minute
-                            String lSecond = string_time_token.nextToken();//Second
-                            iDay = lDay;
-                        }
-                    } else if (Data_type_string.equals("Log") || ((Data_type_string.equals("Downloaded")))) { //Log data
-                        T1_Data_string = ac.getString(1);
-                        T2_Data_string = ac.getString(2);
-                        T3_Data_string = ac.getString(4);
-                        T4_Data_string = ac.getString(5);
-                        Pdiff_Data_string = ac.getString(6);
-                        time = ac.getString(7);
-                        //time = "2020-05-20 12:51:19 GMT
-                        if (Start_time_acquired == false) {
-                            Start_date = time;
-                            Start_time_acquired = true;
-                            StringTokenizer tokens = new StringTokenizer(Start_date, "-");
-                            sYear = tokens.nextToken();//Year
-                            sMonth = tokens.nextToken();//Month
-                            sDay = tokens.nextToken();//Day
-                            StringTokenizer tokens_next = new StringTokenizer(sDay, " ");
-                            sDay = tokens_next.nextToken();//Day
-                            Second_part = tokens_next.nextToken();
-                            Third_part = tokens_next.nextToken();
-                            StringTokenizer tokens_time = new StringTokenizer(Second_part, ":");
-                            sHour = tokens_time.nextToken();//Hour
-                            sMinute = tokens_time.nextToken();//Minute
-                            sSecond = tokens_time.nextToken();//Second
-                            StringTokenizer tokens_zone = new StringTokenizer(Third_part, " ");
-                            sGMT = tokens_zone.nextToken();//GMT
-                            starting_seconds = (Integer.parseInt(sHour) * 3600) + (Integer.parseInt(sMinute) * 60) + (Integer.parseInt(sSecond));
-
-                            if (Date_set == false) {
-                                Day_1 = Integer.parseInt(sDay);
-                                if (Day_1 == 28 && Integer.parseInt(sMonth) == 2)//28 check Feb check
-                                {
-                                    if (Integer.parseInt(sYear) % 100 == 0 && (Integer.parseInt(sYear) % 400 == 0))//Leap year
-                                    {
-                                        Day_2 = Day_1 + 1;
-                                        Day_3 = Day_2 + 1;
-                                        Date_set = true;
-                                    }
-                                    //Not a leap year
-                                    Day_2 = 1;
-                                    Day_3 = Day_2 + 1;
-                                    Date_set = true;
-                                } else if (Day_1 == 29) {
-                                    Day_2 = Day_1 + 1;
-                                    Day_3 = Day_2 + 1;
-                                    Date_set = true;
-                                } else if (Day_1 == 30)//Check 31 days
-                                {
-                                    if ((Integer.parseInt(sMonth) == 1) || (Integer.parseInt(sMonth) == 3) || (Integer.parseInt(sMonth) == 5)
-                                            || (Integer.parseInt(sMonth) == 7) || (Integer.parseInt(sMonth) == 8) || (Integer.parseInt(sMonth) == 10)
-                                            || (Integer.parseInt(sMonth) == 12)) {
-                                        Day_2 = 1;
-                                        Day_3 = Day_2 + 1;
-                                        Date_set = true;
-                                    } else//No a 31 month
-                                    {
-                                        Day_2 = Day_1 + 1;
-                                        Day_3 = Day_2 + 1;
-                                        Date_set = true;
-                                    }
-                                } else {
-                                    Day_2 = Day_1 + 1;
-                                    Day_3 = Day_2 + 1;
-                                }
-                            }//Set date 1 ,2 and 3
-
-                        }//Set the start date
-
-                        StringTokenizer tokens = new StringTokenizer(time, "-");
-                        String iYear = tokens.nextToken();//Year
-                        String iMonth = tokens.nextToken();//Month
-                        iDay = tokens.nextToken();//Day
-                        StringTokenizer tokens_next = new StringTokenizer(iDay, " ");
-                        iDay = tokens_next.nextToken();//Day
-                        String iSecond_part = tokens_next.nextToken();
-                        String iThird_part = tokens_next.nextToken();
-                        StringTokenizer tokens_time = new StringTokenizer(iSecond_part, ":");
-                        String isHour = tokens_time.nextToken();//Hour
-                        String isMinute = tokens_time.nextToken();//Minute
-                        String isSecond = tokens_time.nextToken();//Second
-                        StringTokenizer tokens_zone = new StringTokenizer(iThird_part, " ");
-                        String iGMT = tokens_zone.nextToken();//GMT
-                    }
-                    if (Data_type_string.equals("Live")) {
-                        if ((abs(Integer.parseInt(T1_Data_string)) - abs(Integer.parseInt(T2_Data_string))) > temp_diff) {
-                            //Add data as it is greater than the difference
-                            boolean result = BLE_DB.addData_Data_Science(T1_Data_string, T2_Data_string, T3_Data_string, T4_Data_string, Pdiff_Data_string, time);
-                            if (result == true) {
-                                Log.d(TAG, "data_changes: Added data correctly");
-                            }
-                            if (result == false) {
-                                Log.d(TAG, "data_changes: did not add data correctly");
-                            }//false
-                        }
-                    } else if (Data_type_string.equals("Log")) {
-                        if ((abs(Integer.parseInt(T1_Data_string)) - abs(Integer.parseInt(T2_Data_string))) > temp_diff) {
-                            //Add data as it is greater than the difference
-                            boolean result = BLE_DB.addData_Data_Science(T1_Data_string, T2_Data_string, T3_Data_string, T4_Data_string, Pdiff_Data_string, time);
-                            if (result == true) {
-                                Log.d(TAG, "data_changes: Added data correctly");
-                            }
-                            if (result == false) {
-                                Log.d(TAG, "data_changes: did not add data correctly");
-                            }//false
-                        }
-                    } else if (Data_type_string.equals("Downloaded")) {
-                        if ((abs(Integer.parseInt(T1_Data_string)) - abs(Integer.parseInt(T2_Data_string))) > temp_diff) {
-                            //Add data as it is greater than the difference
-                            boolean result = BLE_DB.addData_Data_Science(T1_Data_string, T2_Data_string, T3_Data_string, T4_Data_string, Pdiff_Data_string, time);
-                            if (result == true) {
-                                Log.d(TAG, "data_changes: Added data correctly");
-                            }
-                            if (result == false) {
-                                Log.d(TAG, "data_changes: did not add data correctly");
-                            }//false
-                        }
-                    }
-                    if (Integer.parseInt(iDay) == Day_1) {
-                        if ((abs(Integer.parseInt(T1_Data_string)) - abs(Integer.parseInt(T2_Data_string))) > temp_diff) {
-                            boolean result_d1 = BLE_DB.addData_Filtered_Day_1(T1_Data_string, T2_Data_string, T3_Data_string, T4_Data_string, Pdiff_Data_string, time);
-                            if (result_d1 == true) {
-                                Log.d(TAG, "data_changes: Added data correctly");
-                            }
-                            if (result_d1 == false) {
-                                Log.d(TAG, "data_changes: did not add data correctly");
-                            }//false
-                            if (D1_visible == false) {
-                                btn_day_one.setVisibility(View.VISIBLE);
-                                D1_visible = true;
-                            }
-                        }
-
-                    } else if (Integer.parseInt(iDay) == Day_2) {
-                        if ((abs(Integer.parseInt(T1_Data_string)) - abs(Integer.parseInt(T2_Data_string))) > temp_diff) {
-                            {
-                                boolean result_d2 = BLE_DB.addData_Filtered_Day_2(T1_Data_string, T2_Data_string, T3_Data_string, T4_Data_string, Pdiff_Data_string, time);
-                                if (result_d2 == true) {
-                                    Log.d(TAG, "data_changes: Added data correctly");
-                                }
-                                if (result_d2 == false) {
-                                    Log.d(TAG, "data_changes: did not add data correctly");
-                                }//false
-                                if (D2_visible == false) {
-                                    btn_day_two.setVisibility(View.VISIBLE);
-                                    D2_visible = true;
-                                }
-                            }
-                        } else if (Integer.parseInt(iDay) == Day_3) {
-                            if ((abs(Integer.parseInt(T1_Data_string)) - abs(Integer.parseInt(T2_Data_string))) > temp_diff) {
-                                {
-                                    boolean result_d3 = BLE_DB.addData_Filtered_Day_3(T1_Data_string, T2_Data_string, T3_Data_string, T4_Data_string, Pdiff_Data_string, time);
-                                    if (result_d3 == true) {
-                                        Log.d(TAG, "data_changes: Added data correctly");
-                                    }
-                                    if (result_d3 == false) {
-                                        Log.d(TAG, "data_changes: did not add data correctly");
-                                    }//false
-                                    if (D3_visible == false) {
-                                        btn_day_three.setVisibility(View.VISIBLE);
-                                        D3_visible = true;
-                                    }
-                                }
-                            }
-                            ac.moveToNext();
-                        }
-                    }
-                }
-                if (data.getCount() == 0) {
-                    Utils.toast(getApplicationContext(), "No data");
-                }
-                //Done
-                progressDialog_filtered.dismiss();//Turn off the progress dialog
-                progressDialog_filtered.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);//Enable touching of screen again
-                this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);//Enable touching of screen again
-                //Graph();//See the data
-                Filter_ran = true;
-                New_Graph();//See if it will change the x axis format
-            }
-        }
-    }
     private int abs(int value)
     {
         if(value <0)
@@ -1224,6 +939,7 @@ public class Local_data_activity extends AppCompatActivity {
         this.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);//Enable touching of screen again
         //Graph();//See the data
         Filter_ran = true;
+        Graph_process = false;
         New_Graph();//See if it will change the x axis format
     }
     private void Mass_store_to_firebase() {
@@ -1289,7 +1005,6 @@ public class Local_data_activity extends AppCompatActivity {
         }
     }
 
-
     private void Home(){
         Intent myIntent = new Intent(Local_data_activity.this, Home_activity.class);
         Bundle bundle = new Bundle();
@@ -1297,11 +1012,6 @@ public class Local_data_activity extends AppCompatActivity {
         myIntent.putExtras(bundle);
         Local_data_activity.this.startActivity(myIntent);
         finish();
-    }
-
-    private void Let_test()
-    {
-        Utils.toast(getApplicationContext(), "Running in let and outlet test");
     }
 
     private void New_Graph()
@@ -1313,6 +1023,7 @@ public class Local_data_activity extends AppCompatActivity {
         ArrayList<String> xAxes = new ArrayList<>();
         ArrayList<Entry> yAxes_1 = new ArrayList<>();
         ArrayList<Entry> yAxes_2 = new ArrayList<>();
+        ArrayList<Entry> yAxes_3 = new ArrayList<>();//Fault line
         ArrayList<ILineDataSet> lineDataSets = new ArrayList<>();
 
         Cursor data = null;
@@ -1431,6 +1142,11 @@ public class Local_data_activity extends AppCompatActivity {
                 }
                 data.moveToNext();
             }
+            //Loop to create line
+            for(int i = 0; i< 7000; i +=100)//Create a fault line will need to pass in the correct seconds
+            {
+                yAxes_3.add(new Entry((int) i, 45000));
+            }
 
             String[] xaxes = new String[xAxes.size()];
 
@@ -1440,13 +1156,26 @@ public class Local_data_activity extends AppCompatActivity {
 
             ArrayList<String> xAxisLabel = new ArrayList<>();
 
-            LineDataSet lineDataSet1 = new LineDataSet(yAxes_1, Data_Spinner_value_1);
-            lineDataSet1.setDrawCircles(true);
+            LineDataSet lineDataSet1 = new LineDataSet(yAxes_1, Data_Spinner_value_1);//Second componenet is the label
+            LineDataSet lineDataSet2 = new LineDataSet(yAxes_2, Data_Spinner_value_2);
+            if(Graph_process == true) {//True for datascience
+                if (ds_selected_inlet.equals(Data_Spinner_value_1)) {
+                    lineDataSet1 = new LineDataSet(yAxes_1, "Inlet");//Second componenet is the laebel
+                }
+                if (ds_selected_outlet.equals(Data_Spinner_value_2)) {
+                    lineDataSet2 = new LineDataSet(yAxes_2, "Outlet");//Second componenet is the laebel
+                }
+
+                //Striaght line on the point of error
+                LineDataSet lineDataSet3 = new LineDataSet(yAxes_3, "Fault");
+                lineDataSet3.setDrawCircles(false);
+                lineDataSet3.setColor(Color.BLACK);
+                lineDataSets.add(lineDataSet3);
+            }
+            lineDataSet1.setDrawCircles(false);
             lineDataSet1.setColor(Color.RED);
             lineDataSets.add(lineDataSet1);
-
-            LineDataSet lineDataSet2 = new LineDataSet(yAxes_2, Data_Spinner_value_2);
-            lineDataSet2.setDrawCircles(true);
+            lineDataSet2.setDrawCircles(false);
             lineDataSet2.setColor(Color.BLUE);
             lineDataSets.add(lineDataSet2);
 
@@ -1502,6 +1231,411 @@ public class Local_data_activity extends AppCompatActivity {
         }
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+    }
+
+    private void Process_data_science() {
+        int temp_diff = 1000;//10°C
+        D1_visible = false;
+        D2_visible = false;
+        D3_visible = false;
+        //Use data science database
+        BLE_DB.deleteAll_Data_Science();
+
+        btn_day_one.setVisibility(View.INVISIBLE);
+        btn_day_two.setVisibility(View.INVISIBLE);
+        btn_day_three.setVisibility(View.INVISIBLE);
+        //Select the test
+        //Setup the dialogs
+        dialog_ds_select_test = new Dialog(this);
+
+        //Show the dialog
+        dialog_ds_select_test.show();
+        //Set the content view
+        dialog_ds_select_test.setContentView(R.layout.dialog_ds_select_process);//Go to the select process
+        //Test select buttons
+        Button btn_let_test = dialog_ds_select_test.findViewById(R.id.btn_ds_let_test);
+        Button btn_no_test  = dialog_ds_select_test.findViewById(R.id.btn_ds_no_test);
+
+
+        //dialog_ds_select_test.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+        btn_let_test.setOnClickListener(new View.OnClickListener() {//Show next dialog
+            @Override
+            public void onClick(View v) {
+                inlet_outlet_test_selected = true;
+                dialog_ds_select_test.dismiss();//Turn off the yes / no dialog
+
+            }
+        });
+        btn_no_test.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                inlet_outlet_test_selected = false;
+                dialog_ds_select_test.dismiss();//Turn off the yes / no dialog
+            }
+        });
+        if(inlet_outlet_test_selected == true) {
+            inlet_Select();//Select the inlet
+            dialog_ds_select_test.dismiss();//Turn off the yes / no dialog
+        }
+    }
+
+    private void inlet_Select()
+    {
+        inlet_outlet_test_selected = false;//Reset the testing
+        dialog_ds_inlet_select = new Dialog(this);
+        dialog_ds_inlet_select.show();
+
+        dialog_ds_inlet_select.setContentView(R.layout.dialog_ds_inlet_select);//Go to the select process
+        //Inlet buttons
+        Button btn_ds_inlet_t1 = dialog_ds_inlet_select.findViewById(R.id.btn_inlet_t1);//t1
+        Button btn_ds_inlet_t2 = dialog_ds_inlet_select.findViewById(R.id.btn_inlet_t2);//t2
+        Button btn_ds_inlet_t3 = dialog_ds_inlet_select.findViewById(R.id.btn_inlet_t3);//t3
+        Button btn_ds_inlet_t4 = dialog_ds_inlet_select.findViewById(R.id.btn_inlet_t4);//t4
+        //dialog_ds_inlet_select.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+
+        btn_ds_inlet_t1.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_inlet = "T1"; outlet_select();}});
+        btn_ds_inlet_t2.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_inlet = "T2"; outlet_select();}});
+        btn_ds_inlet_t3.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_inlet = "T3"; outlet_select();}});
+        btn_ds_inlet_t4.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_inlet = "T4"; outlet_select();}});
+
+
+    }
+
+    private void outlet_select()
+    {
+        dialog_ds_inlet_select.dismiss();
+        dialog_ds_outlet_select = new Dialog(this);
+        dialog_ds_outlet_select.show();
+        dialog_ds_outlet_select.setContentView(R.layout.dialog_ds_outlet_select);//Go to the select process
+
+
+        //Outlet buttons need to remove previously selected button
+        Button btn_ds_outlet_t1 = dialog_ds_outlet_select.findViewById(R.id.btn_outlet_t1);//t1
+        Button btn_ds_outlet_t2 = dialog_ds_outlet_select.findViewById(R.id.btn_outlet_t2);//t2
+        Button btn_ds_outlet_t3 = dialog_ds_outlet_select.findViewById(R.id.btn_outlet_t3);//t3
+        Button btn_ds_outlet_t4 = dialog_ds_outlet_select.findViewById(R.id.btn_outlet_t4);//t4
+        //Hide selected inlet
+        if(ds_selected_inlet.equals(("T1")))
+        {
+            btn_ds_outlet_t1.setVisibility(View.INVISIBLE);
+        }
+        else if(ds_selected_inlet.equals(("T2")))
+        {
+            btn_ds_outlet_t2.setVisibility(View.INVISIBLE);
+        }
+        else if(ds_selected_inlet.equals(("T3")))
+        {
+            btn_ds_outlet_t3.setVisibility(View.INVISIBLE);
+        }
+        else if(ds_selected_inlet.equals(("T4")))
+        {
+            btn_ds_outlet_t4.setVisibility(View.INVISIBLE);
+        }
+
+
+        //Call back buttons
+        btn_ds_outlet_t1.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_outlet = "T1"; Run_inlet_outlet_data_science();}});
+        btn_ds_outlet_t2.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_outlet = "T2"; Run_inlet_outlet_data_science();}});
+        btn_ds_outlet_t3.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_outlet = "T3"; Run_inlet_outlet_data_science();}});
+        btn_ds_outlet_t4.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_outlet = "T4"; Run_inlet_outlet_data_science();}});
+
+    }
+    private void Run_inlet_outlet_data_science()
+    {
+        dialog_ds_outlet_select.dismiss();
+        //Log an output string
+        Utils.toast(getApplicationContext(),"Running data science on: " + ds_selected_inlet +" and : " + ds_selected_outlet);
+        //loop through data
+        //compare tin to tout if not greater than 30°C draw a line at the first point in time
+
+        BLE_DB.deleteAll_Filtered_Day_1();
+        BLE_DB.deleteAll_Filtered_Day_2();
+        BLE_DB.deleteAll_Filtered_Day_3();
+        BLE_DB.deleteAll_Filtered();
+        BLE_DB.deleteAll_Filtered_Log();
+        BLE_DB.deleteAll_Filtered_Live();
+
+        //Processing loop
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+        Cursor data;
+        boolean Start_time_acquired = false;
+        boolean Date_set = false;
+        String T1_Data_string = "";
+        String T2_Data_string = "";
+        String T3_Data_string = "";
+        String T4_Data_string = "";
+        String Pdiff_Data_string = "";
+        String time = "";
+        String Second_part = "";
+        String Third_part = "";
+        String iDay = "";
+        data = BLE_DB.showData_Sensor_Board();//Sensor board filter
+        if(Data_type_string.equals("Live")) {
+            data = BLE_DB.showData_Sensor_Board();
+        }
+        else if(Data_type_string.equals("Log")) {
+            data = BLE_DB.showData_Log();
+        }
+        else if(Data_type_string.equals("Downloaded")) {
+            data = BLE_DB.showData_Downloaded();
+        }
+
+        if(data.getCount() != 0) {
+            //Cursor window fix and get data
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                CursorWindow cw = new CursorWindow("test", 67108864);//16777216 broke,536870912
+                AbstractWindowedCursor ac = (AbstractWindowedCursor) data;
+                ac.setWindow(cw);
+                ac.moveToFirst();//0
+
+                if (ac.getCount() == 0)//No data selected
+                {
+                    Utils.toast(getApplicationContext(), "No data selected");
+                }
+                for (int i = 0; i < ac.getCount(); i++) {
+
+                    if (Data_type_string.equals("Live")) {//Live data
+                        T1_Data_string = ac.getString(1);
+                        T2_Data_string = ac.getString(2);
+                        T3_Data_string = ac.getString(4);
+                        T4_Data_string = ac.getString(5);
+                        Pdiff_Data_string = ac.getString(6);
+                        time = ac.getString(7);
+                        if (Start_time_acquired == false) {
+                            Start_date = time;
+                            Start_time_acquired = true;
+                            StringTokenizer tokens = new StringTokenizer(Start_date, " ");
+                            sDay_of_week = tokens.nextToken();//Day of week
+                            sMonth = tokens.nextToken();//Month
+                            sDay = tokens.nextToken();//Day
+                            sTime_of_day = tokens.nextToken();//Time of day
+                            sGMT = tokens.nextToken();//GMT
+                            sYear = tokens.nextToken();//Year
+                            StringTokenizer timetokens = new StringTokenizer(sTime_of_day, ":");//This substring is split with a :
+                            sHour = timetokens.nextToken();//Hour
+                            sMinute = timetokens.nextToken();//Minute
+                            sSecond = timetokens.nextToken();//Second
+                            starting_seconds = (Integer.parseInt(sHour) * 3600) + (Integer.parseInt(sMinute) * 60) + (Integer.parseInt(sSecond));
+
+                            if (Date_set == false) {
+                                Day_1 = Integer.parseInt(sDay);
+                                if (Day_1 == 28 && Integer.parseInt(sMonth) == 2)//28 check Feb check
+                                {
+                                    if (Integer.parseInt(sYear) % 100 == 0 && (Integer.parseInt(sYear) % 400 == 0))//Leap year
+                                    {
+                                        Day_2 = Day_1 + 1;
+                                        Day_3 = Day_2 + 1;
+                                        Date_set = true;
+                                    }
+                                    //Not a leap year
+                                    Day_2 = 1;
+                                    Day_3 = Day_2 + 1;
+                                    Date_set = true;
+                                } else if (Day_1 == 29) {
+                                    Day_2 = Day_1 + 1;
+                                    Day_3 = Day_2 + 1;
+                                    Date_set = true;
+                                } else if (Day_1 == 30)//Check 31 days
+                                {
+                                    if ((Integer.parseInt(sMonth) == 1) || (Integer.parseInt(sMonth) == 3) || (Integer.parseInt(sMonth) == 5)
+                                            || (Integer.parseInt(sMonth) == 7) || (Integer.parseInt(sMonth) == 8) || (Integer.parseInt(sMonth) == 10)
+                                            || (Integer.parseInt(sMonth) == 12)) {
+                                        Day_2 = 1;
+                                        Day_3 = Day_2 + 1;
+                                        Date_set = true;
+                                    } else//No a 31 month
+                                    {
+                                        Day_2 = Day_1 + 1;
+                                        Day_3 = Day_2 + 1;
+                                        Date_set = true;
+                                    }
+                                } else {
+                                    Day_2 = Day_1 + 1;
+                                    Day_3 = Day_2 + 1;
+                                }
+                            }//Set date 1 ,2 and 3]
+
+                            StringTokenizer sting_token = new StringTokenizer(time, " ");
+                            String lDay_of_week = sting_token.nextToken();//Day of week
+                            String lMonth = sting_token.nextToken();//Month
+                            String lDay = sting_token.nextToken();//Day
+                            String lTime_of_day = sting_token.nextToken();//Time of day
+                            String lGMT = sting_token.nextToken();//GMT
+                            String lYear = sting_token.nextToken();//Year
+                            StringTokenizer string_time_token = new StringTokenizer(lTime_of_day, ":");//This substring is split with a :
+                            String lHour = string_time_token.nextToken();//Hour
+                            String lMinute = string_time_token.nextToken();//Minute
+                            String lSecond = string_time_token.nextToken();//Second
+                            iDay = lDay;
+
+                        }
+                    } else if (Data_type_string.equals("Log") || ((Data_type_string.equals("Downloaded")))) { //Log data
+                        T1_Data_string = ac.getString(1);
+                        T2_Data_string = ac.getString(2);
+                        T3_Data_string = ac.getString(4);
+                        T4_Data_string = ac.getString(5);
+                        Pdiff_Data_string = ac.getString(6);
+                        time = ac.getString(7);
+                        //time = "2020-05-20 12:51:19 GMT
+                        if (Start_time_acquired == false) {
+                            Start_date = time;
+                            Start_time_acquired = true;
+                            StringTokenizer tokens = new StringTokenizer(Start_date, "-");
+                            sYear = tokens.nextToken();//Year
+                            sMonth = tokens.nextToken();//Month
+                            sDay = tokens.nextToken();//Day
+                            StringTokenizer tokens_next = new StringTokenizer(sDay, " ");
+                            sDay = tokens_next.nextToken();//Day
+                            Second_part = tokens_next.nextToken();
+                            Third_part = tokens_next.nextToken();
+                            StringTokenizer tokens_time = new StringTokenizer(Second_part, ":");
+                            sHour = tokens_time.nextToken();//Hour
+                            sMinute = tokens_time.nextToken();//Minute
+                            sSecond = tokens_time.nextToken();//Second
+                            StringTokenizer tokens_zone = new StringTokenizer(Third_part, " ");
+                            sGMT = tokens_zone.nextToken();//GMT
+                            starting_seconds = (Integer.parseInt(sHour) * 3600) + (Integer.parseInt(sMinute) * 60) + (Integer.parseInt(sSecond));
+
+                            if (Date_set == false) {
+                                Day_1 = Integer.parseInt(sDay);
+                                if (Day_1 == 28 && Integer.parseInt(sMonth) == 2)//28 check Feb check
+                                {
+                                    if (Integer.parseInt(sYear) % 100 == 0 && (Integer.parseInt(sYear) % 400 == 0))//Leap year
+                                    {
+                                        Day_2 = Day_1 + 1;
+                                        Day_3 = Day_2 + 1;
+                                        Date_set = true;
+                                    }
+                                    //Not a leap year
+                                    Day_2 = 1;
+                                    Day_3 = Day_2 + 1;
+                                    Date_set = true;
+                                } else if (Day_1 == 29) {
+                                    Day_2 = Day_1 + 1;
+                                    Day_3 = Day_2 + 1;
+                                    Date_set = true;
+                                } else if (Day_1 == 30)//Check 31 days
+                                {
+                                    if ((Integer.parseInt(sMonth) == 1) || (Integer.parseInt(sMonth) == 3) || (Integer.parseInt(sMonth) == 5)
+                                            || (Integer.parseInt(sMonth) == 7) || (Integer.parseInt(sMonth) == 8) || (Integer.parseInt(sMonth) == 10)
+                                            || (Integer.parseInt(sMonth) == 12)) {
+                                        Day_2 = 1;
+                                        Day_3 = Day_2 + 1;
+                                        Date_set = true;
+                                    } else//No a 31 month
+                                    {
+                                        Day_2 = Day_1 + 1;
+                                        Day_3 = Day_2 + 1;
+                                        Date_set = true;
+                                    }
+                                } else {
+                                    Day_2 = Day_1 + 1;
+                                    Day_3 = Day_2 + 1;
+                                }
+                            }//Set date 1 ,2 and 3
+
+                        }//Set the start date
+
+                        StringTokenizer tokens = new StringTokenizer(time, "-");
+                        String iYear = tokens.nextToken();//Year
+                        String iMonth = tokens.nextToken();//Month
+                        iDay = tokens.nextToken();//Day
+                        StringTokenizer tokens_next = new StringTokenizer(iDay, " ");
+                        iDay = tokens_next.nextToken();//Day
+                        /*
+                        String iSecond_part = tokens_next.nextToken();
+                        String iThird_part = tokens_next.nextToken();
+
+                        StringTokenizer tokens_time = new StringTokenizer(iSecond_part, ":");
+                        String isHour = tokens_time.nextToken();//Hour
+                        String isMinute = tokens_time.nextToken();//Minute
+                        String isSecond = tokens_time.nextToken();//Second
+                        StringTokenizer tokens_zone = new StringTokenizer(iThird_part, " ");
+                        String iGMT = tokens_zone.nextToken();//GMT
+
+                         */
+                    }
+
+                    if (Data_type_string.equals("Live")) {
+                        boolean result = BLE_DB.addData_Filtered_Live(T1_Data_string, T2_Data_string, T3_Data_string, T4_Data_string, Pdiff_Data_string, time);
+                        if (result == true) {
+                            Log.d(TAG, "data_changes: Added data correctly");
+                        }
+                        if (result == false) {
+                            Log.d(TAG, "data_changes: did not add data correctly");
+                        }//false
+                    } else if (Data_type_string.equals("Log")) {
+                        boolean result = BLE_DB.addData_Filtered_Log(T1_Data_string, T2_Data_string, T3_Data_string, T4_Data_string, Pdiff_Data_string, time);
+                        if (result == true) {
+                            Log.d(TAG, "data_changes: Added data correctly");
+                        }
+                        if (result == false) {
+                            Log.d(TAG, "data_changes: did not add data correctly");
+                        }//false
+                    } else if (Data_type_string.equals("Downloaded")) {
+                        boolean result = BLE_DB.addData_Filtered_Downloaded(T1_Data_string, T2_Data_string, T3_Data_string, T4_Data_string, Pdiff_Data_string, time);
+                        if (result == true) {
+                            Log.d(TAG, "data_changes: Added data correctly");
+                        }
+                        if (result == false) {
+                            Log.d(TAG, "data_changes: did not add data correctly");
+                        }//false
+                    }
+
+
+                    if (Integer.parseInt(iDay) == Day_1) {
+                        boolean result_d1 = BLE_DB.addData_Filtered_Day_1(T1_Data_string, T2_Data_string, T3_Data_string, T4_Data_string, Pdiff_Data_string, time);
+                        if (result_d1 == true) {
+                            Log.d(TAG, "data_changes: Added data correctly");
+                        }
+                        if (result_d1 == false) {
+                            Log.d(TAG, "data_changes: did not add data correctly");
+                        }//false
+                        if (D1_visible == false) {
+                            btn_day_one.setVisibility(View.VISIBLE);
+                            D1_visible = true;
+                        }
+
+                    } else if (Integer.parseInt(iDay) == Day_2) {
+                        boolean result_d2 = BLE_DB.addData_Filtered_Day_2(T1_Data_string, T2_Data_string, T3_Data_string, T4_Data_string, Pdiff_Data_string, time);
+                        if (result_d2 == true) {
+                            Log.d(TAG, "data_changes: Added data correctly");
+                        }
+                        if (result_d2 == false) {
+                            Log.d(TAG, "data_changes: did not add data correctly");
+                        }//false
+                        if (D2_visible == false) {
+                            btn_day_two.setVisibility(View.VISIBLE);
+                            D2_visible = true;
+                        }
+                    } else if (Integer.parseInt(iDay) == Day_3) {
+                        boolean result_d3 = BLE_DB.addData_Filtered_Day_3(T1_Data_string, T2_Data_string, T3_Data_string, T4_Data_string, Pdiff_Data_string, time);
+                        if (result_d3 == true) {
+                            Log.d(TAG, "data_changes: Added data correctly");
+                        }
+                        if (result_d3 == false) {
+                            Log.d(TAG, "data_changes: did not add data correctly");
+                        }//false
+                        if (D3_visible == false) {
+                            btn_day_three.setVisibility(View.VISIBLE);
+                            D3_visible = true;
+                        }
+                    }
+                    ac.moveToNext();
+
+                }
+            }
+        }
+        if(data.getCount() == 0)
+        {
+            Utils.toast(getApplicationContext(),"No data");
+        }
+        Filter_ran = true;//Need this line to graph the data
+        //Done
+        Graph_process = true;
+        New_Graph();//See if it will change the x axis format
     }
 }
 
