@@ -86,7 +86,7 @@ public class Local_data_activity extends AppCompatActivity {
     public int Userdata_number_of_data = 0;
     private String Start_date = "";
     private int starting_seconds =0;
-    private int begining_seconds = 0;
+    private int beginning_seconds = 0;
     private int ending_seconds = 0;
     private long data_stored = 0;
     private String  sDay_of_week = "", sMonth = "", sDay = "", sTime_of_day = "", sGMT = "", sYear = "";//Spliting the date up
@@ -1057,7 +1057,7 @@ public class Local_data_activity extends AppCompatActivity {
             int atotal_minutes = 0;
             int atotal_seconds = 0;
             int acurrent_seconds = 0;
-            //for(int i = begining_seconds; i <= ending_seconds; i++)
+            //for(int i = beginning_seconds; i <= ending_seconds; i++)
             for (int i = 0; i <= 86400; i++) {
                 acurrent_seconds = i;
                 x_records = x_records + 1;
