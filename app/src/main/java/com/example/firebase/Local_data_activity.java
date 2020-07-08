@@ -107,10 +107,17 @@ public class Local_data_activity extends AppCompatActivity {
     private Dialog dialog_ds_inlet_select;
     private Dialog dialog_ds_outlet_select;
 
+    private int Ds_inlet_outlet_diff = 3320;//23°C
     private String ds_selected_inlet = "";//The selected inlet
     private String ds_selected_outlet ="";//The selected outlet
-
+    private int ds_inlet_outlet_found_time_in_seconds = 0;
     private boolean inlet_outlet_test_selected = false;
+
+    private ArrayAdapter<CharSequence> adapter_mode_device_type;
+    private ArrayAdapter<CharSequence> adapter_data_1;
+    private ArrayAdapter<CharSequence> adapter_data_2;
+
+    private int ds_found_day = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -147,15 +154,15 @@ public class Local_data_activity extends AppCompatActivity {
         Spinner_data_1 = findViewById(R.id.spinner_select_data_1);//For the device sending data
         Spinner_data_2 = findViewById(R.id.spinner_select_data_2);//For the device sending data
         //Setup the adapters and link them to the layout and the layout list
-        ArrayAdapter<CharSequence> adapter_data_1 = ArrayAdapter.createFromResource(this,R.array.Data_selection,R.layout.support_simple_spinner_dropdown_item);
-        ArrayAdapter<CharSequence> adapter_data_2 = ArrayAdapter.createFromResource(this,R.array.Data_selection,R.layout.support_simple_spinner_dropdown_item);
+        adapter_data_1 = ArrayAdapter.createFromResource(this,R.array.Data_selection,R.layout.support_simple_spinner_dropdown_item);
+        adapter_data_2 = ArrayAdapter.createFromResource(this,R.array.Data_selection,R.layout.support_simple_spinner_dropdown_item);
 
         ArrayAdapter<CharSequence> adapter_filter_year = ArrayAdapter.createFromResource(this,R.array.Year_Selection,R.layout.support_simple_spinner_dropdown_item);
         ArrayAdapter<CharSequence> adapter_filter_month = ArrayAdapter.createFromResource(this,R.array.Month_Selection,R.layout.support_simple_spinner_dropdown_item);
         ArrayAdapter<CharSequence> adapter_data_filter_day = ArrayAdapter.createFromResource(this,R.array.Day_Selection,R.layout.support_simple_spinner_dropdown_item);
         ArrayAdapter<CharSequence> adapter_mode_filter_hour = ArrayAdapter.createFromResource(this,R.array.Hour_Selection,R.layout.support_simple_spinner_dropdown_item);
         ArrayAdapter<CharSequence> adapter_mode_filter_minute = ArrayAdapter.createFromResource(this,R.array.Minute_Selection,R.layout.support_simple_spinner_dropdown_item);
-        ArrayAdapter<CharSequence> adapter_mode_device_type = ArrayAdapter.createFromResource(this,R.array.Data_type,R.layout.support_simple_spinner_dropdown_item);
+        adapter_mode_device_type = ArrayAdapter.createFromResource(this,R.array.Data_type,R.layout.support_simple_spinner_dropdown_item);
 
         adapter_data_1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         adapter_data_2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -1145,7 +1152,9 @@ public class Local_data_activity extends AppCompatActivity {
             //Loop to create line
             for(int i = 0; i< 7000; i +=100)//Create a fault line will need to pass in the correct seconds
             {
-                yAxes_3.add(new Entry((int) i, 45000));
+                //yAxes_3.add(new Entry((int) i, 45000));
+                yAxes_3.add(new Entry((int) i, ds_inlet_outlet_found_time_in_seconds));//Add the found line if the data exists
+                //ds_inlet_outlet_found_time_in_seconds
             }
 
             String[] xaxes = new String[xAxes.size()];
@@ -1158,7 +1167,7 @@ public class Local_data_activity extends AppCompatActivity {
 
             LineDataSet lineDataSet1 = new LineDataSet(yAxes_1, Data_Spinner_value_1);//Second componenet is the label
             LineDataSet lineDataSet2 = new LineDataSet(yAxes_2, Data_Spinner_value_2);
-            if(Graph_process == true) {//True for datascience
+            if(Graph_process == true  &&(ds_found_day == Day_to_view)) {//True for datascience and the correct day
                 if (ds_selected_inlet.equals(Data_Spinner_value_1)) {
                     lineDataSet1 = new LineDataSet(yAxes_1, "Inlet");//Second componenet is the laebel
                 }
@@ -1264,6 +1273,10 @@ public class Local_data_activity extends AppCompatActivity {
             public void onClick(View v) {
                 inlet_outlet_test_selected = true;
                 dialog_ds_select_test.dismiss();//Turn off the yes / no dialog
+                if(inlet_outlet_test_selected == true) {
+                    inlet_Select();//Select the inlet
+                    dialog_ds_select_test.dismiss();//Turn off the yes / no dialog
+                }
 
             }
         });
@@ -1272,12 +1285,13 @@ public class Local_data_activity extends AppCompatActivity {
             public void onClick(View v) {
                 inlet_outlet_test_selected = false;
                 dialog_ds_select_test.dismiss();//Turn off the yes / no dialog
+                if(inlet_outlet_test_selected == true) {
+                    inlet_Select();//Select the inlet
+                    dialog_ds_select_test.dismiss();//Turn off the yes / no dialog
+                }
             }
         });
-        if(inlet_outlet_test_selected == true) {
-            inlet_Select();//Select the inlet
-            dialog_ds_select_test.dismiss();//Turn off the yes / no dialog
-        }
+
     }
 
     private void inlet_Select()
@@ -1336,20 +1350,31 @@ public class Local_data_activity extends AppCompatActivity {
 
 
         //Call back buttons
-        btn_ds_outlet_t1.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_outlet = "T1"; Run_inlet_outlet_data_science();}});
-        btn_ds_outlet_t2.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_outlet = "T2"; Run_inlet_outlet_data_science();}});
-        btn_ds_outlet_t3.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_outlet = "T3"; Run_inlet_outlet_data_science();}});
-        btn_ds_outlet_t4.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_outlet = "T4"; Run_inlet_outlet_data_science();}});
+        btn_ds_outlet_t1.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_outlet = "T1"; Update_UI_selection_DS();Run_inlet_outlet_data_science();}});
+        btn_ds_outlet_t2.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_outlet = "T2"; Update_UI_selection_DS();Run_inlet_outlet_data_science();}});
+        btn_ds_outlet_t3.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_outlet = "T3"; Update_UI_selection_DS();Run_inlet_outlet_data_science();}});
+        btn_ds_outlet_t4.setOnClickListener(new View.OnClickListener(){@Override public void onClick(View v) {ds_selected_outlet = "T4"; Update_UI_selection_DS();Run_inlet_outlet_data_science();}});
 
     }
-    private void Run_inlet_outlet_data_science()
+    private void Update_UI_selection_DS()
+    {
+        Spinner_data_type.setSelection(adapter_mode_device_type.getPosition("Log"));//Data spinner
+        Data_type_string = "Log";
+        //D1
+        Spinner_data_1.setSelection(adapter_data_1.getPosition(ds_selected_inlet));
+        Data_Spinner_value_1 = ds_selected_inlet;
+        //D2
+        Spinner_data_2.setSelection(adapter_data_2.getPosition(ds_selected_outlet));
+        Data_Spinner_value_2 = ds_selected_outlet;
+    }
+    private void Run_inlet_outlet_data_science()//Data science processing routine
     {
         dialog_ds_outlet_select.dismiss();
         //Log an output string
         Utils.toast(getApplicationContext(),"Running data science on: " + ds_selected_inlet +" and : " + ds_selected_outlet);
         //loop through data
-        //compare tin to tout if not greater than 30°C draw a line at the first point in time
-
+        //compare tin to tout if not greater than X°C draw a line at the first point in time
+        //Delete the data
         BLE_DB.deleteAll_Filtered_Day_1();
         BLE_DB.deleteAll_Filtered_Day_2();
         BLE_DB.deleteAll_Filtered_Day_3();
@@ -1362,6 +1387,7 @@ public class Local_data_activity extends AppCompatActivity {
         Cursor data;
         boolean Start_time_acquired = false;
         boolean Date_set = false;
+        boolean found_first_diff_point = false;
         String T1_Data_string = "";
         String T2_Data_string = "";
         String T3_Data_string = "";
@@ -1371,18 +1397,10 @@ public class Local_data_activity extends AppCompatActivity {
         String Second_part = "";
         String Third_part = "";
         String iDay = "";
-        data = BLE_DB.showData_Sensor_Board();//Sensor board filter
-        if(Data_type_string.equals("Live")) {
-            data = BLE_DB.showData_Sensor_Board();
-        }
-        else if(Data_type_string.equals("Log")) {
-            data = BLE_DB.showData_Log();
-        }
-        else if(Data_type_string.equals("Downloaded")) {
-            data = BLE_DB.showData_Downloaded();
-        }
+        data = BLE_DB.showData_Log();//Show the log data
 
         if(data.getCount() != 0) {
+            Utils.toast(getApplicationContext(),"Processing log data");
             //Cursor window fix and get data
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
                 CursorWindow cw = new CursorWindow("test", 67108864);//16777216 broke,536870912
@@ -1544,18 +1562,7 @@ public class Local_data_activity extends AppCompatActivity {
                         iDay = tokens.nextToken();//Day
                         StringTokenizer tokens_next = new StringTokenizer(iDay, " ");
                         iDay = tokens_next.nextToken();//Day
-                        /*
-                        String iSecond_part = tokens_next.nextToken();
-                        String iThird_part = tokens_next.nextToken();
 
-                        StringTokenizer tokens_time = new StringTokenizer(iSecond_part, ":");
-                        String isHour = tokens_time.nextToken();//Hour
-                        String isMinute = tokens_time.nextToken();//Minute
-                        String isSecond = tokens_time.nextToken();//Second
-                        StringTokenizer tokens_zone = new StringTokenizer(iThird_part, " ");
-                        String iGMT = tokens_zone.nextToken();//GMT
-
-                         */
                     }
 
                     if (Data_type_string.equals("Live")) {
@@ -1623,6 +1630,89 @@ public class Local_data_activity extends AppCompatActivity {
                             D3_visible = true;
                         }
                     }
+                    if(found_first_diff_point == false)//Check inlet and outlet value and if the value has not been set
+                    {
+                        int tin = 0, tout =0;
+                        //Do t inlet
+                        if(ds_selected_inlet.equals("T1"))
+                        {
+                            tin = Integer.parseInt(T1_Data_string);
+                        }
+                        else if(ds_selected_inlet.equals("T2"))
+                        {
+                            tin = Integer.parseInt(T2_Data_string);
+                        }
+                        else if(ds_selected_inlet.equals("T3"))
+                        {
+                            tin = Integer.parseInt(T3_Data_string);
+                        }
+                        else if(ds_selected_inlet.equals("T4"))
+                        {
+                            tin = Integer.parseInt(T4_Data_string);
+                        }
+
+                        //Do t outlet
+                        if(ds_selected_outlet.equals("T1"))
+                        {
+                            tout = Integer.parseInt(T1_Data_string);
+                        }
+                        else if(ds_selected_outlet.equals("T2"))
+                        {
+                            tout = Integer.parseInt(T2_Data_string);
+                        }
+                        else if(ds_selected_outlet.equals("T3"))
+                        {
+                            tout = Integer.parseInt(T3_Data_string);
+                        }
+                        else if(ds_selected_outlet.equals("T4"))
+                        {
+                            tout = Integer.parseInt(T4_Data_string);
+                        }
+                        int difference_value = Math.abs(tin - tout);//Find the difference
+                        if(difference_value > Ds_inlet_outlet_diff)
+                        {
+                            //this datam is the point of the line
+                            //Take present time and convert to time in seconds to update the line
+
+                            //Will need to split the time string up to get this then combine to get the time value from 0 -86400
+
+                            T1_Data_string = ac.getString(1);
+                            T2_Data_string = ac.getString(2);
+                            T3_Data_string = ac.getString(4);
+                            T4_Data_string = ac.getString(5);
+                            Pdiff_Data_string = ac.getString(6);
+                            time = ac.getString(7);
+                            //time = "2020-05-20 12:51:19 GMT
+
+                            String ds_date = time;
+                            StringTokenizer tokens = new StringTokenizer(ds_date, "-");
+                            String ds_Year = tokens.nextToken();//Year
+                            String ds_Month = tokens.nextToken();//Month
+                            String ds_Day = tokens.nextToken();//Day
+                            StringTokenizer tokens_next = new StringTokenizer(ds_Day, " ");
+                            ds_Day = tokens_next.nextToken();//Day
+                            String ds_Second_part = tokens_next.nextToken();
+                            String ds_Third_part = tokens_next.nextToken();
+                            StringTokenizer tokens_time = new StringTokenizer(ds_Second_part, ":");
+                            String ds_Hour = tokens_time.nextToken();//Hour
+                            String ds_Minute = tokens_time.nextToken();//Minute
+                            String ds_Second = tokens_time.nextToken();//Second
+                            StringTokenizer tokens_zone = new StringTokenizer(ds_Third_part, " ");
+                            String ds_GMT = tokens_zone.nextToken();//GMT
+                            int ds_seconds = (Integer.parseInt(ds_Hour) * 3600) + (Integer.parseInt(ds_Minute) * 60) + (Integer.parseInt(ds_Second));
+
+                            if (Integer.parseInt(ds_Day) == Day_1) {
+                                ds_found_day = 1;//Set to day 1
+                            } else if (Integer.parseInt(ds_Day) == Day_2) {
+                                ds_found_day = 2;//Set to day 2
+                            } else if (Integer.parseInt(ds_Day) == Day_3) {
+                                ds_found_day = 3;//Set to day 3
+                            }
+
+                            ds_inlet_outlet_found_time_in_seconds = ds_seconds;
+                            found_first_diff_point = true;//Run this so it does not keep re setting over and over, need to pass in correct time starting point
+                        }
+                    }
                     ac.moveToNext();
 
                 }
@@ -1635,6 +1725,7 @@ public class Local_data_activity extends AppCompatActivity {
         Filter_ran = true;//Need this line to graph the data
         //Done
         Graph_process = true;
+
         New_Graph();//See if it will change the x axis format
     }
 }
