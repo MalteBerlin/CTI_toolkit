@@ -693,7 +693,7 @@ public class MainActivity extends AppCompatActivity {
         //Xaxis
         //Add to the array list
 
-        //for(int i = begining_seconds; i <= ending_seconds; i++)
+        //for(int i = beginning_seconds; i <= ending_seconds; i++)
         for (int i = 0; i <= data_display_max; i++) {
             xAxes.add(String.valueOf(i));
         }
@@ -790,7 +790,7 @@ public class MainActivity extends AppCompatActivity {
 
         String[] xaxes = new String[xAxes.size()];
         //int size = 0;
-        //size = ending_seconds - begining_seconds;
+        //size = ending_seconds - beginning_seconds;
         //String[] xaxes = new String[size];
         for (int i = 0; i < xAxes.size(); i++) {
             xaxes[i] = xAxes.get(i).toString();
